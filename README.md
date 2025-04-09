@@ -1,25 +1,16 @@
-# 🚀 Winoto (Beta) — Auto Install Windows on VPS
+# 🪟 Winoto - Auto Install Windows + RDP on VPS
 
-Script ini memungkinkan kamu untuk menginstall Windows secara otomatis di VPS (seperti DigitalOcean, Vultr, dll) **tanpa perlu masuk recovery mode**!
+**Winoto** adalah skrip shell otomatis untuk menginstal Windows (10/Server) di VPS (DigitalOcean, Vultr, dll) **tanpa perlu masuk ke Recovery Mode**, plus otomatis aktifkan RDP dan atur IP static.
 
-## 🔥 Fitur
-- Pilih OS Windows: 10 / 2012 / 2016 / 2019 / 2022
-- Auto setting IP Static dari public IP VPS
-- Tidak perlu masuk recovery manual
-- Tinggal tunggu → login via VNC Console
+> 🧪 Versi ini masih Beta! Jangan pakai di server produksi sebelum testing dulu.
 
-## 🧪 Status
-> Versi: Beta v0.1  
-> Untuk testing dan review lebih lanjut sebelum final release.
+---
 
-## 🛠 Cara Pakai
+## 🚀 Cara Pakai
 
-### 1. Deploy VPS Ubuntu (20.04 / 22.04)
-Minimal RAM 2GB & Storage 25GB.
-
-### 2. Jalankan Perintah Berikut:
+1. Gunakan VPS dengan storage kosong (minimal 25 GB).
+2. Login ke VPS via SSH.
+3. Jalankan:
 
 ```bash
-wget https://raw.githubusercontent.com/AutoFTbot/Winoto/main/windows-auto.sh
-chmod +x windows-auto.sh
-./windows-auto.sh
+bash <(curl -sSL https://raw.githubusercontent.com/AutoFTbot/Winoto/main/windows-auto.sh)
