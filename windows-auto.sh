@@ -31,7 +31,6 @@ esac
 IP4=$(curl -4 -s icanhazip.com)
 getwey=$(ip route | awk '/default/ { print $3 }')
 
-# Buat file net.bat untuk set IP static
 cat >/tmp/net.bat<<EOF
 @ECHO OFF
 cd.>%windir%\\GetAdmin
@@ -54,7 +53,6 @@ del "%~f0"
 exit
 EOF
 
-# Buat file rdp-enable.bat untuk aktifkan RDP otomatis
 cat >/tmp/rdp-enable.bat<<EOF
 @echo off
 reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
@@ -64,11 +62,9 @@ del "%~f0"
 exit
 EOF
 
-# Install OS Windows ke disk
 echo "[*] Mulai install Windows. Mohon tunggu..."
 wget --no-check-certificate -O- $selectos | gunzip | dd of=/dev/vda bs=3M status=progress
 
-# Mount disk & salin .bat ke Startup Windows
 mount.ntfs-3g /dev/vda2 /mnt
 cd "/mnt/ProgramData/Microsoft/Windows/Start Menu/Programs/"
 cd Start* || cd start*
