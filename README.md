@@ -13,4 +13,4 @@
 3. Jalankan:
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/AutoFTbot/Winoto/main/windows-auto.sh)
+wget https://raw.githubusercontent.com/AutoFTbot/winoto/refs/heads/main/windows-auto.sh && windows-auto.sh
