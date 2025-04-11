@@ -62,4 +62,4 @@ echo ""
 echo "[✓] Install selesai!"
 echo "🔁 VPS akan shutdown dalam 5 detik dan siap RDP!"
 sleep 5
-poweroff
+reboot
