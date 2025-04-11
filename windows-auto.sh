@@ -1,56 +1,107 @@
 #!/bin/bash
-
-# Winoto - TinyKRNL Auto Installer (Interactive Menu)
+# Winoto Installer (Interactive Menu)
 # Created by AutoFTbot
-
+#
 echo ""
 echo "======================================"
 echo "   Winoto - Auto Install Windows VPS"
 echo "======================================"
 echo ""
-echo "Pilih OS yang ingin diinstall:"
-echo "  1) Windows 10"
-read -p "Masukkan pilihan [1]: " pilihan
+echo "Pilih titit yang ingin di install"
+echo "	1) Windows 2019(Default)"
+echo "	2) Windows server 2016"
+echo "	3) Windows Server 2012"
+echo "	4) Windows 10 Lite"
+echo "	5) Pakai link gz mu sendiri"
 
-case "$pilihan" in
-  1) OS="Windows 10"; URL="https://crustywindo.ws/collection/Community/Windows%2010%20Ubuntu%20Edition%20X64.iso" ;;
-  *) echo "Pilihan tidak valid!"; exit 1 ;;
+read -p "Pilih [1]: " PILIHOS
+
+case "$PILIHOS" in
+	1|"") PILIHOS="https://sourceforge.net/projects/nixpoin/files/windows2019DO.gz";;
+	2) PILIHOS="https://sourceforge.net/projects/win-gz/files/2024-08-17/win-server-2016.gz";;
+	3) PILIHOS="https://sourceforge.net/projects/nixpoin/files/windows2012DO.gz";;
+	4) PILIHOS="https://umbel.my.id/wedus10lite.gz";;
+ 	5) read -p "Masukkan Link GZ mu : " PILIHOS;;
+	*) echo "pilihan salah"; exit;;
 esac
 
-INTERFACE_NAME="Ethernet Instance 0"
+echo "Pastikan password minimal  12 Karakter, masukan angka dan spesial karakter"
+read -p "Masukkan titit untuk akun Administrator (minimal 12 karakter): " PASSADMIN
+
 IP4=$(curl -4 -s icanhazip.com)
-GATEWAY=$(ip route | awk '/default/ { print $3 }')
+GW=$(ip route | awk '/default/ { print $3 }')
 
-cat >/tmp/net.bat <<EOF
-@echo off
-netsh interface ip set address name="$INTERFACE_NAME" static $IP4 255.255.240.0 $GATEWAY
-netsh interface ip set dns name="$INTERFACE_NAME" static 1.1.1.1
-netsh interface ip add dns name="$INTERFACE_NAME" 8.8.8.8 index=2
+
+cat >/tmp/net.bat<<EOF
+@ECHO OFF
+cd.>%windir%\GetAdmin
+if exist %windir%\GetAdmin (del /f /q "%windir%\GetAdmin") else (
+echo CreateObject^("Shell.Application"^).ShellExecute "%~s0", "%*", "", "runas", 1 >> "%temp%\Admin.vbs"
+"%temp%\Admin.vbs"
+del /f /q "%temp%\Admin.vbs"
+exit /b 2)
+net user Administrator $PASSADMIN
+
+
+for /f "tokens=3*" %%i in ('netsh interface show interface ^|findstr /I /R "Local.* Ethernet Ins*"') do (set InterfaceName=%%j)
+netsh -c interface ip set address name="Ethernet Instance 0" source=static address=$IP4 mask=255.255.240.0 gateway=$GW
+netsh -c interface ip add dnsservers name="Ethernet Instance 0" address=8.8.8.8 index=1 validate=no
+netsh -c interface ip add dnsservers name="Ethernet Instance 0" address=8.8.4.4 index=2 validate=no
+
+cd /d "%ProgramData%/Microsoft/Windows/Start Menu/Programs/Startup"
+del /f /q net.bat
 exit
 EOF
 
-cat >/tmp/rdp-enable.bat <<EOF
-@echo off
-reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
-netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
+
+cat >/tmp/dpart.bat<<EOF
+@ECHO OFF
+echo JENDELA INI JANGAN DITUTUP
+echo SCRIPT INI AKAN MERUBAH PORT RDP MENJADI 22, SETELAH RESTART UNTUK MENYAMBUNG KE RDP GUNAKAN ALAMAT $IP4:22
+echo KETIK YES LALU ENTER!
+
+cd.>%windir%\GetAdmin
+if exist %windir%\GetAdmin (del /f /q "%windir%\GetAdmin") else (
+echo CreateObject^("Shell.Application"^).ShellExecute "%~s0", "%*", "", "runas", 1 >> "%temp%\Admin.vbs"
+"%temp%\Admin.vbs"
+del /f /q "%temp%\Admin.vbs"
+exit /b 2)
+
+set PORT=22
+set RULE_NAME="Open Port %PORT%"
+
+netsh advfirewall firewall show rule name=%RULE_NAME% >nul
+if not ERRORLEVEL 1 (
+    rem Rule %RULE_NAME% already exists.
+    echo Hey, you already got a out rule by that name, you cannot put another one in!
+) else (
+    echo Rule %RULE_NAME% does not exist. Creating...
+    netsh advfirewall firewall add rule name=%RULE_NAME% dir=in action=allow protocol=TCP localport=%PORT%
+)
+
+reg add "HKLM\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v PortNumber /t REG_DWORD /d 22
+
+ECHO SELECT VOLUME=%%SystemDrive%% > "%SystemDrive%\diskpart.extend"
+ECHO EXTEND >> "%SystemDrive%\diskpart.extend"
+START /WAIT DISKPART /S "%SystemDrive%\diskpart.extend"
+
+del /f /q "%SystemDrive%\diskpart.extend"
+cd /d "%ProgramData%/Microsoft/Windows/Start Menu/Programs/Startup"
+del /f /q dpart.bat
+timeout 50 >nul
+del /f /q ChromeSetup.exe
+echo JENDELA INI JANGAN DITUTUP
 exit
 EOF
 
-echo ""
-echo "[*] Memulai install: $OS"
-echo "[*] Download image dan tulis ke disk..."
-wget -O /tmp/windows.iso "$URL"
-dd if=/tmp/windows.iso of=/dev/vda bs=4M status=progress
+wget --no-check-certificate -O- $PILIHOS | gunzip | dd of=/dev/vda bs=3M status=progress
 
-echo "[*] Injecting RDP dan konfigurasi jaringan..."
-sleep 5
 mount.ntfs-3g /dev/vda2 /mnt
-mkdir -p "/mnt/ProgramData/Microsoft/Windows/Start Menu/Programs/Startup"
-cp -f /tmp/net.bat /mnt/ProgramData/Microsoft/Windows/Start\ Menu/Programs/Startup/
-cp -f /tmp/rdp-enable.bat /mnt/ProgramData/Microsoft/Windows/Start\ Menu/Programs/Startup/
+cd "/mnt/ProgramData/Microsoft/Windows/Start Menu/Programs/"
+cd Start* || cd start*; \
+cp -f /tmp/net.bat net.bat
+cp -f /tmp/dpart.bat dpart.bat
 
-echo ""
-echo "[✓] Install selesai!"
-echo "🔁 VPS akan shutdown dalam 5 detik dan siap RDP!"
-sleep 5
-reboot
+echo 'Your server will turning off in 3 second'
+sleep 3
+poweroff
