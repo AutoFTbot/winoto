@@ -9,21 +9,11 @@ echo "   Winoto - Auto Install Windows VPS"
 echo "======================================"
 echo ""
 echo "Pilih OS yang ingin diinstall:"
-echo "  1) Tiny11"
-echo "  2) Tiny10"
-echo "  3) Tiny7"
-echo "  4) Windows 11 (Original)"
-echo "  5) Windows 10 (Original)"
-echo "  6) Windows 7 (Original)"
-read -p "Masukkan pilihan [1-6]: " pilihan
+echo "  1) Windows 10"
+read -p "Masukkan pilihan [1]: " pilihan
 
 case "$pilihan" in
-  1) OS="Tiny11"; URL="https://crustywindo.ws/files/Windows11/tiny11_23H2_x64_en-US.gz" ;;
-  2) OS="Tiny10"; URL="https://crustywindo.ws/files/Windows10/tiny10_22H2_x64_en-US.gz" ;;
-  3) OS="Tiny7";  URL="https://crustywindo.ws/files/Windows7/tiny7_7601_x64_en-US.gz" ;;
-  4) OS="Win11";  URL="https://crustywindo.ws/files/Windows11/Windows_11_23H2_x64_en-US.gz" ;;
-  5) OS="Win10";  URL="https://crustywindo.ws/files/Windows10/Windows_10_22H2_x64_en-US.gz" ;;
-  6) OS="Win7";   URL="https://crustywindo.ws/files/Windows7/Windows_7_7601_x64_en-US.gz" ;;
+  1) OS="Windows 10"; URL="https://crustywindo.ws/collection/Community/Windows%2010%20Ubuntu%20Edition%20X64.iso" ;;
   *) echo "Pilihan tidak valid!"; exit 1 ;;
 esac
 
@@ -49,7 +39,8 @@ EOF
 echo ""
 echo "[*] Memulai install: $OS"
 echo "[*] Download image dan tulis ke disk..."
-wget -O- "$URL" --no-check-certificate | gunzip | dd of=/dev/vda bs=3M status=progress
+wget -O /tmp/windows.iso "$URL"
+dd if=/tmp/windows.iso of=/dev/vda bs=4M status=progress
 
 echo "[*] Injecting RDP dan konfigurasi jaringan..."
 sleep 5
