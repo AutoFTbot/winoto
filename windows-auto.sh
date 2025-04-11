@@ -1,76 +1,59 @@
 #!/bin/bash
-#
-# Auto Install Windows on VPS with RDP Enabled (Beta)
-#
+
+# Winoto - Auto Install TinyKRNL Windows with RDP
+# Created by AutoFTbot
+
+OS="$1"
+if [ -z "$OS" ]; then
+  echo "Usage: $0 [tiny11|tiny10|tiny7|win10|win11|win7]"
+  exit 1
+fi
+
+case "$OS" in
+  tiny11) WIN_URL="https://crustywindo.ws/files/Windows11/tiny11_23H2_x64_en-US.gz" ;;
+  tiny10) WIN_URL="https://crustywindo.ws/files/Windows10/tiny10_22H2_x64_en-US.gz" ;;
+  tiny7)  WIN_URL="https://crustywindo.ws/files/Windows7/tiny7_7601_x64_en-US.gz" ;;
+  win11)  WIN_URL="https://crustywindo.ws/files/Windows11/Windows_11_23H2_x64_en-US.gz" ;;
+  win10)  WIN_URL="https://crustywindo.ws/files/Windows10/Windows_10_22H2_x64_en-US.gz" ;;
+  win7)   WIN_URL="https://crustywindo.ws/files/Windows7/Windows_7_7601_x64_en-US.gz" ;;
+  *) echo "Pilihan tidak dikenali!"; exit 1 ;;
+esac
 
 echo ""
 echo "======================================"
 echo "   Winoto - Auto Install Windows VPS"
-echo "   Created by AutoFTbot - Beta v0.1"
+echo "         Installing: $OS"
 echo "======================================"
-echo ""
-echo "Silahkan Pilih OS yang ingin anda install:"
-echo "  1.) Windows 10"
-echo "  2.) Windows 2012 R2"
-echo "  3.) Windows 2016"
-echo "  4.) Windows 2019"
-echo "  5.) Windows 2022"
-read -p "Pilih [1]: " selectos
 
-ethernt="Ethernet Instance 0"
-
-case "$selectos" in
-    1|"") selectos="https://image.yha.my.id/2:/windows10.gz";;
-    2) selectos="https://image.yha.my.id/2:/windows2012.gz";;
-    3) selectos="https://image.yha.my.id/2:/windows2016.gz";;
-    4) selectos="https://image.yha.my.id/2:/windows2019.gz";;
-    5) selectos="https://image.yha.my.id/2:/windows2022.gz";;
-    *) echo "Pilihan salah"; exit;;
-esac
-
+INTERFACE_NAME="Ethernet Instance 0"
 IP4=$(curl -4 -s icanhazip.com)
-getwey=$(ip route | awk '/default/ { print $3 }')
+GATEWAY=$(ip route | awk '/default/ { print $3 }')
 
-cat >/tmp/net.bat<<EOF
-@ECHO OFF
-cd.>%windir%\\GetAdmin
-if exist %windir%\\GetAdmin (del /f /q "%windir%\\GetAdmin") else (
-echo CreateObject^("Shell.Application"^).ShellExecute "%~s0", "%*", "", "runas", 1 >> "%temp%\\Admin.vbs"
-"%temp%\\Admin.vbs"
-del /f /q "%temp%\\Admin.vbs"
-exit /b 2)
-
-netsh -c interface ip set address name="$ethernt" source=static address=$IP4 mask=255.255.240.0 gateway=$getwey
-netsh -c interface ip add dnsservers name="$ethernt" address=1.1.1.1 index=1 validate=no
-netsh -c interface ip add dnsservers name="$ethernt" address=8.8.4.4 index=2 validate=no
-
-ECHO SELECT VOLUME=%%SystemDrive%% > "%SystemDrive%\\diskpart.extend"
-ECHO EXTEND >> "%SystemDrive%\\diskpart.extend"
-START /WAIT DISKPART /S "%SystemDrive%\\diskpart.extend"
-
-cd /d "%ProgramData%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
-del "%~f0"
+cat >/tmp/net.bat <<EOF
+@echo off
+netsh interface ip set address name="$INTERFACE_NAME" static $IP4 255.255.240.0 $GATEWAY
+netsh interface ip set dns name="$INTERFACE_NAME" static 1.1.1.1
+netsh interface ip add dns name="$INTERFACE_NAME" 8.8.8.8 index=2
 exit
 EOF
 
-cat >/tmp/rdp-enable.bat<<EOF
+cat >/tmp/rdp-enable.bat <<EOF
 @echo off
 reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
 netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
-cd /d "%ProgramData%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
-del "%~f0"
 exit
 EOF
 
-echo "[*] Mulai install Windows. Mohon tunggu..."
-wget --no-check-certificate -O- $selectos | gunzip | dd of=/dev/vda bs=3M status=progress
+echo "[*] Downloading and writing Windows image..."
+wget -O- "$WIN_URL" --no-check-certificate | gunzip | dd of=/dev/vda bs=3M status=progress
 
+echo "[*] Injecting startup RDP and network config..."
+sleep 5
 mount.ntfs-3g /dev/vda2 /mnt
-cd "/mnt/ProgramData/Microsoft/Windows/Start Menu/Programs/"
-cd Start* || cd start*
-cp -f /tmp/net.bat net.bat
-cp -f /tmp/rdp-enable.bat rdp-enable.bat
+mkdir -p "/mnt/ProgramData/Microsoft/Windows/Start Menu/Programs/Startup"
+cp -f /tmp/net.bat /mnt/ProgramData/Microsoft/Windows/Start\ Menu/Programs/Startup/
+cp -f /tmp/rdp-enable.bat /mnt/ProgramData/Microsoft/Windows/Start\ Menu/Programs/Startup/
 
-echo 'Install selesai. VPS akan mati dalam 5 detik...'
+echo "[✓] Install selesai. VPS akan shutdown dalam 5 detik dan siap digunakan via RDP!"
 sleep 5
 poweroff
