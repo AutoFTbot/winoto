@@ -13,4 +13,8 @@
 3. Jalankan:
 
 ```bash
-wget https://raw.githubusercontent.com/AutoFTbot/winoto/refs/heads/main/windows-auto.sh && windows-auto.sh
+wget https://raw.githubusercontent.com/AutoFTbot/winoto/refs/heads/main/rdp-kvm.sh && rdp-kvm.
+```
+```bash
+wget https://raw.githubusercontent.com/AutoFTbot/winoto/refs/heads/main/rdp-non-kvm.sh && rdp-non-kvm.sh
+```
